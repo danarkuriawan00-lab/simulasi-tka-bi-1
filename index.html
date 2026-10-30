@@ -532,6 +532,7 @@ function doPost(e) {
                                 <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5">
                                     <i class="fa-solid fa-file-lines text-blue-600"></i>
                                     <span id="question-section-badge">Soal</span> No. <span id="current-q-num">1</span> dari <span id="total-q-num">50</span>
+                                    <span class="text-blue-600">·</span> <span id="question-points">1 poin</span>
                                 </span>
                                 
                                 <button onclick="toggleDoubtful()" id="btn-doubt" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-all flex items-center gap-1.5">
@@ -644,6 +645,12 @@ function doPost(e) {
                     <p class="text-xs text-slate-200" id="res-summary">Benar 50 dari 50 Soal</p>
                 </div>
 
+                <details class="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-4 text-left">
+                    <summary class="cursor-pointer text-sm font-bold text-slate-700">Rubrik Penilaian Soal 1–40</summary>
+                    <p id="score-rubric-summary" class="text-xs text-slate-600 mt-2">Rincian jumlah soal dan pernyataan akan ditampilkan setelah ujian.</p>
+                    <ol id="score-rubric-list" class="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-3 text-xs text-slate-700"></ol>
+                </details>
+
                 <div id="post-status-message" class="text-xs text-slate-500 mb-4 font-semibold">
                     Sending results to spreadsheet...
                 </div>
@@ -668,7 +675,8 @@ function doPost(e) {
             question,
             options: options.map((text, optionIndex) => ({ key: 'ABCD'[optionIndex], text })),
             correct,
-            multiSelect: false
+            multiSelect: false,
+            points: extra.points ?? 1
         });
 
         const pgkQuestion = (id, question, options, correct, extra = {}) => ({
@@ -680,7 +688,8 @@ function doPost(e) {
             question,
             options: options.map((text, optionIndex) => ({ key: 'ABCD'[optionIndex], text })),
             correct,
-            multiSelect: true
+            multiSelect: true,
+            points: extra.points ?? 1
         });
 
         const bsQuestion = (id, question, statements, extra = {}) => ({
@@ -694,7 +703,8 @@ function doPost(e) {
             question,
             statements,
             options: [],
-            correct: statements.map(item => item.correct)
+            correct: statements.map(item => item.correct),
+            points: extra.points ?? 1
         });
 
         const passageVina = `<p class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-2">Bacalah paragraf berikut untuk menjawab soal nomor 1–3.</p>
@@ -793,7 +803,7 @@ Hadirnya Satelit Palapa membuat komunikasi di Indonesia menjadi lebih lancar dan
             pgQuestion(5, 'Makna konotatif dari kata yang bercetak tebal (<b>muka merah padam</b>) pada paragraf tersebut adalah....', [
                 'bingung', 'bahagia', 'marah', 'sedih'
             ], 'C', { passage: passageDiskusi }),
-            pgkQuestion(6, 'Berdasarkan teks tersebut, peserta diskusi yang menunjukkan sikap bijaksana adalah....<br>Berilah tanda centang pada jawaban yang tepat. (Jawaban dapat lebih dari satu)', [
+            pgkQuestion(6, 'Berdasarkan teks tersebut, peserta diskusi yang setuju dengan usulan Rudi adalah....<br>Berilah tanda centang pada jawaban yang tepat. (Jawaban dapat lebih dari satu)', [
                 'Rama', 'Raihan', 'Rasman'
             ], ['A', 'B'], { passage: passageDiskusi }),
             bsQuestion(7, 'Berdasarkan teks tersebut, manakah pernyataan berikut yang benar dan salah? Berilah tanda centang pada kolom Benar atau Salah untuk setiap pernyataan.', [
@@ -989,7 +999,7 @@ Hadirnya Satelit Palapa membuat komunikasi di Indonesia menjadi lebih lancar dan
             ], 'B', { passage: passageKomodo }),
             pgkQuestion(45, 'Nilai-nilai yang terkandung pada puisi tersebut adalah....<br>Berilah tanda centang pada jawaban yang tepat. (Jawaban dapat lebih dari satu)', [
                 'sosial', 'agama', 'pendidikan'
-            ], ['A', 'B', 'C'], { passage: poemSahabat, passageClass: 'passage-box poem-box' }),
+            ], ['A', 'C'], { passage: poemSahabat, passageClass: 'passage-box poem-box' }),
             bsQuestion(46, 'Apa contoh peristiwa yang dapat ditemukan dalam kehidupan sehari-hari berdasarkan teks tersebut? Berilah tanda centang pada kolom Benar atau Salah untuk setiap pernyataan.', [
                 { text: 'Tika membantu Nenek menyeberangi jalan.', correct: 'benar' },
                 { text: 'Saat hari libur, Ibu memasak makanan kesukaan Dani.', correct: 'salah' },
@@ -1135,13 +1145,13 @@ Dokter kecil harus sigap dalam pelayanan kesehatan di sekolah. Untuk penanganan 
             pgQuestion(50, 'Paragraf tersebut memberikan informasi tentang....', ['makanan yang mengenyangkan', 'pentingnya makanan sehat', 'nutrisi dalam makanan', 'cara membangun sel'], 'C', { passage: `<p class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-2">Bacalah paragraf berikut.</p>Kita membutuhkan makanan sehat tiap hari. Makan bukan sekadar untuk kenyang. Tubuh kita membutuhkan nutrisi untuk tumbuh dan berkembang. Nutrisi berfungsi membangun sel dan jaringan.` })
         ];
 
-        const s1Nana = `<p class="font-bold mb-1">Kisah Nana dan Nini</p> Pada suatu hari di pinggir hutan, seekor burung Kekekow mengalami luka yang cukup parah pada bagian sayapnya akibat tersangkut dahan pohon. Burung tersebut tergeletak lemah dan tidak mampu terbang. Melihat keadaan tersebut, dua orang gadis miskin yang baik hati bernama Nana dan Nini segera datang menolongnya. Mereka membawa burung itu ke rumah, merawat lukanya dengan penuh kasih sayang hingga sembuh, lalu melepaskannya kembali ke alam bebas.<br><br>Nana dan Nini memang dikenal oleh penduduk desa sebagai anak yang berhati emas. Mereka selalu membantu siapa saja tanpa mengharapkan imbalan. Berbeda halnya dengan cerita lain, di mana tokoh Yuyu pernah menolong Rafli, namun di belakang ia berharap mendapatkan imbalan atas bantuannya. Begitu ***** kisah Dina, seorang anak yang tidak tega melihat seekor kucing kelaparan di jalan raya lalu membawanya pulang untuk diberi makan.`;
+        const s1Nana = `<p class="font-bold mb-1">Kisah Nana dan Nini</p> Pada suatu hari di pinggir hutan, seekor burung Kekekow mengalami luka yang cukup parah pada bagian sayapnya akibat tersangkut dahan pohon. Burung tersebut tergeletak lemah dan tidak mampu terbang. Melihat keadaan tersebut, dua orang gadis miskin yang baik hati bernama Nana dan Nini segera datang menolongnya. Mereka membawa burung itu ke rumah, merawat lukanya dengan penuh kasih sayang hingga sembuh, lalu melepaskannya kembali ke alam bebas.<br><br>Nana dan Nini memang dikenal oleh penduduk desa sebagai anak yang berhati emas. Mereka selalu membantu siapa saja tanpa mengharapkan imbalan. Berbeda halnya dengan cerita lain, di mana tokoh Yuyu pernah menolong Rafli, namun di belakang ia berharap mendapatkan imbalan atas bantuannya. Begitu pula kisah Dina, seorang anak yang tidak tega melihat seekor kucing kelaparan di jalan raya lalu membawanya pulang untuk diberi makan.`;
         const s1Symbiosis = `<p class="font-bold mb-1">Simbiosis dalam Ekosistem</p><b>Paragraf 1:</b> Simbiosis merupakan hubungan timbal balik antara dua makhluk hidup yang berbeda jenis dan hidup bersama dalam satu ekosistem. Hubungan ini terbentuk untuk memenuhi kebutuhan hidup masing-masing organisme.<br><br><b>Paragraf 2:</b> Jenis simbiosis yang pertama adalah simbiosis mutualisme, yaitu hubungan antarmakhluk hidup yang saling menguntungkan. Contohnya dapat dilihat pada hubungan antara burung jalak dengan kerbau. Burung jalak mendapatkan makanan berupa kutu dari tubuh kerbau, sedangkan kerbau merasa terbantu karena tubuhnya bebas dari gatal. Contoh lainnya adalah hubungan antara lebah dengan bunga, di mana lebah mendapatkan nektar dan bunga terbantu dalam proses penyerbukan.<br><br><b>Paragraf 3:</b> Jenis kedua adalah simbiosis parasitisme, yaitu hubungan yang menguntungkan satu pihak tetapi merugikan pihak lain. Contohnya adalah benalu yang hidup menempel pada pohon inangnya.<br><br><b>Paragraf 4:</b> Jenis ketiga adalah simbiosis komensalisme, yaitu hubungan yang menguntungkan satu pihak, sedangkan pihak lain tidak diuntungkan maupun dirugikan, seperti ikan remora dengan ikan hiu.`;
         const s1Turtle = `<p class="font-bold mb-1">Kura-Kura yang Ingin Terbang</p>Kura-Kura merasa sangat bosan dan tidak puas dengan dirinya sendiri. Ia sangat ingin bisa terbang seperti burung di udara dan selalu membenci cangkangnya karena merasa cangkang tersebut amat berat serta menyulitkan geraknya. Kura-Kura kemudian memaksa sepasang angsa untuk membantunya terbang dengan cara menggigit sebatang kayu yang diapit oleh kedua angsa tersebut.<br><br>Saat terbawa tinggi ke udara, teman-temannya di darat terkejut melihat Kura-Kura bisa terbang. Kura-Kura yang ingin menyombongkan diri kemudian membuka mulutnya untuk bersorak. Akibatnya, gigitannya terlepas dan ia terjatuh dari langit. Untung saja, cangkang kerasnya menahan benturan keras ke tanah sehingga tubuhnya terlindungi dari cedera parah. Sejak peristiwa itu, Kura-Kura menyadari betapa bergunanya cangkang tersebut. Ia belajar untuk menghargai dirinya sendiri dan menerima keadaannya dengan lapang dada.`;
         const s1Kartini = `<p class="font-bold mb-1">Perjuangan R.A. Kartini</p><b>Paragraf 1:</b> Raden Ajeng Kartini merupakan salah satu pahlawan nasional Indonesia yang gigih memperjuangkan kesetaraan hak kaum wanita, terutama dalam bidang pendidikan.<br><br><b>Paragraf 2:</b> Kumpulan surat-surat yang ditulisnya kemudian dibukukan dengan judul <i>Habis Gelap Terbitlah Terang</i>. Judul ini mengacu pada kondisi kaum perempuan saat itu yang berada dalam keadaan terbatas oleh tradisi. Buku tersebut berkaitan erat dengan keyakinan Kartini bahwa pendidikan merupakan kunci utama bagi kemajuan bangsa, dan ia berjuang agar perempuan mendapatkan hak pendidikan yang setara.<br><br><b>Paragraf 3:</b> Buku <i>Habis Gelap Terbitlah Terang</i> disunting oleh J.H. Abendanon, seorang pejabat kolonial Belanda yang mengumpulkan surat-surat kiriman Kartini kepada teman-temannya di Eropa. Buku tersebut terkenal hingga sekarang karena memuat kritik-kritik tajam Kartini terhadap tradisi feodal yang membatasi ruang gerak perempuan.`;
         const s1LargeAnimals = `<p class="font-bold mb-1">Kemampuan Hewan-Hewan Besar</p>Banyak orang mengira bahwa hewan-hewan bertubuh besar selalu bergerak lambat dan malas. Padahal, hewan besar seperti gajah dan kuda nil juga memiliki kemampuan berlari yang mengagumkan. Kuda nil memang jarang terlihat berlari karena menghabiskan sebagian besar waktunya berendam di dalam air untuk menjaga suhu tubuhnya. Namun saat berada di darat, kuda nil bisa berlari cukup kencang. Sementara itu, berdasarkan data penelitian, gajah Afrika mampu berlari hingga kecepatan 40 km/jam, sedangkan gajah Asia dapat mencapai kecepatan 24 km/jam.<br><br>Dalam kehidupan sehari-hari, kita sering kali dihadapkan pada keterbatasan atau penilaian meremehkan dari orang lain. Dari kisah kehidupan hewan maupun cerita fabel, kita diajarkan untuk memiliki kesabaran, tidak mudah mengeluh, dan menerima keadaan dengan lapang dada tanpa harus merasa marah atau menyalahkan keadaan sekitar.`;
         const s1Pippi = `<p class="font-bold mb-1">Kisah Pippi dan Puisi Lingkungan</p><b>Teks 1:</b> Setiap pagi, teman-teman Pippi sering bertanya ke mana ia hendak pergi. Pippi kemudian berjalan memasuki hutan diiringi oleh tawa ceria teman-temannya. Namun hari itu, Pippi tidak mendapatkan buah segar maupun biji-bijian, melainkan hanya mendapatkan buah-buahan yang sudah busuk. Pippi pun berjalan sambil menggerutu. Ketika sampai di tepi sungai, Pippi mencuci bajunya. Sayangnya, matahari telah terbenam sehingga cucian bajunya tidak bisa kering dengan cepat.<br><br><b>Teks 2 (Puisi Lingkungan):</b><div class="italic text-center my-2">Dulu hijau permai alamku,<br>Kini tertutup debu dan beton tinggi.<br>Kemajuan teknologi melesat cepat,<br>Namun jerit bumi makin tak terdengar.<br>Hati ini prihatin melihat alam yang merana,<br>Aku berjanji 'kan menanam kembali harapan,<br>Menjaga bumi di tengah riuhnya zaman.</div>`;
-        const s1Tiko = `<p class="font-bold mb-1">Kisah Tiko si Hati Hutan</p>Tiko adalah seekor kelinci kecil yang tinggal di dalam hutan. Ia dikenal sangat ***** membantu siapa pun yang kesulitan tanpa pernah mengharapkan balasan. Karena kebaikan hati dan kasih sayangnya yang tulus kepada seluruh penghuni hutan, ia dijuluki sebagai si <b>“Hati Hutan”</b>.<br><br>Namun, tidak semua hewan menyukai Tiko. Burung Gagak merasa iri pada kepopuleran Tiko. Gagak sering menyebarkan kabar bohong bahwa Tiko menolong hewan lain hanya untuk mencari perhatian dan pujian. Walaupun difitnah, Tiko tidak pernah dendam dan tetap berbuat baik. Sikap kedermawanan Tiko juga terlihat dalam kehidupan sehari-hari manusia, seperti Ibu Arista yang ***** berbagi makanan dengan tetangganya, atau Mariska yang menjenguk dan membawa makanan untuk tetangganya yang sakit. Sikap ini berbeda dengan Ures, yang hanya mau membantu temannya jika diberi uang balasan.`;
+        const s1Tiko = `<p class="font-bold mb-1">Kisah Tiko si Hati Hutan</p>Tiko adalah seekor kelinci kecil yang tinggal di dalam hutan. Ia dikenal sangat suka membantu siapa pun yang kesulitan tanpa pernah mengharapkan balasan. Karena kebaikan hati dan kasih sayangnya yang tulus kepada seluruh penghuni hutan, ia dijuluki sebagai si <b>“Hati Hutan”</b>.<br><br>Namun, tidak semua hewan menyukai Tiko. Burung Gagak merasa iri pada kepopuleran Tiko. Gagak sering menyebarkan kabar bohong bahwa Tiko menolong hewan lain hanya untuk mencari perhatian dan pujian. Walaupun difitnah, Tiko tidak pernah dendam dan tetap berbuat baik. Sikap kedermawanan Tiko juga terlihat dalam kehidupan sehari-hari manusia, seperti Ibu Arista yang suka berbagi makanan dengan tetangganya, atau Mariska yang menjenguk dan membawa makanan untuk tetangganya yang sakit. Sikap ini berbeda dengan Ures, yang hanya mau membantu temannya jika diberi uang balasan.`;
         const s1Apotek = `<p class="font-bold mb-1">Tanaman Apotek Hidup</p><b>Paragraf 1:</b> Apotek hidup adalah sebutan untuk lahan atau pekarangan rumah yang ditanami dengan berbagai tanaman obat-obatan herbal alami. Tanaman ini berguna untuk menjaga kesehatan tubuh dan membantu menyembuhkan penyakit ringan secara alami.<br><br><b>Paragraf 2:</b> Cara menanam tanaman apotek hidup relatif cukup mudah. Lahan tanah perlu digemburkan terlebih dahulu dan dicampur dengan pupuk organik. Setelah itu, bibit tanaman seperti jahe, kunyit, temulawak, lengkuas, kencur, daun sirih, lidah buaya, atau kumis kucing ditanam dan disiram secara teratur. Adapun tanaman sayuran seperti bayam dan kangkung biasanya ditanam pada area kebun sayur terpisah.<br><br><b>Paragraf 3:</b> Manfaat utama tanaman apotek hidup adalah menyediakan obat-obatan keluarga yang aman, murah, serta bebas dari bahan kimia berbahaya.`;
         const s1Heron = `<p class="font-bold mb-1">Bangau dan Serigala</p>Pada suatu hari, seekor Serigala tersedak karena ada sepotong tulang yang tersangkut di tenggorokannya. Ia mengaduh kesakitan dan memohon bantuan kepada Bangau. Karena merasa kasihan, Bangau bersedia membantu. Dengan paruhnya yang panjang, Bangau berhasil mengambil tulang tersebut dari tenggorokan Serigala.<br><br>Namun setelah selamat, Serigala langsung melenggang pergi tanpa mengucapkan terima kasih apalagi memberikan imbalan yang sempat dijanjikannya. Bangau merasa sangat kecewa atas sikap Serigala yang tidak tahu berterima kasih. Sejak saat itu, Bangau mengalami perubahan sikap; ia belajar dari pengalamannya dan tidak mau lagi menolong Serigala di kemudian hari.`;
         const s1Habibie = `<p class="font-bold mb-1">B.J. Habibie: Bapak Teknologi Indonesia</p>Prof. Dr. Ing. H. Bacharuddin Jusuf Habibie lahir di Parepare, Sulawesi Selatan, pada tanggal 25 Juni 1936. Beliau dikenal luas sebagai seorang tokoh jenius dan dijuluki sebagai Bapak Teknologi Indonesia.<br><br>Perjalanan kariernya sangat cemerlang. Habibie dipercaya menjadi Menteri Negara Riset dan Teknologi sejak tahun 1978. Selanjutnya, pada Maret 1998, ia diangkat menjadi Wakil Presiden Republik Indonesia. Tak lama kemudian, Habibie memimpin Indonesia sebagai Presiden RI setelah Presiden Soeharto mengundurkan diri pada Mei 1998. Selama menjabat sebagai presiden, ia membebaskan tahanan politik dan menyelenggarakan pemilu yang demokratis. B.J. Habibie wafat pada tanggal 11 September 2019 dalam usia 83 tahun.`;
@@ -1151,12 +1161,12 @@ Dokter kecil harus sigap dalam pelayanan kesehatan di sekolah. Untuk penanganan 
 
         const soalSimulasi1 = [
             pgQuestion(1, 'Siapakah tokoh yang menolong burung Kekekow dalam cerita di atas?', ['Rafli dan Yuyu', 'Nana dan Nini', 'Dina dan Kura-Kura', 'Pippi dan Lili'], 'B', { passage: s1Nana }),
-            pgQuestion(2, 'Nana dan Nini dikenal oleh seluruh penduduk desa sebagai anak yang <b>berhati emas</b>. Makna ungkapan tersebut adalah ...', ['Sangat kaya dan bergelimang harta', 'Memiliki barang-barang berharga dari emas', 'Memiliki hati yang baik, ***** menolong, dan peduli', '***** dipuji dan mencari perhatian orang lain'], 'C', { passage: s1Nana }),
-            bsQuestion(3, 'Tentukan apakah pernyataan-pernyataan berikut Sesuai atau Tidak Sesuai berdasarkan isi cerita.', [{ text: 'Yuyu mengharapkan pamrih dan imbalan setelah membantu Rafli.', correct: 'benar' }, { text: 'Warga Desa ***** Jati menyelesaikan segala permasalahan melalui musyawarah.', correct: 'salah' }, { text: 'Dina menemukan seekor kucing yang kelaparan lalu memberinya makan.', correct: 'benar' }], { passage: s1Nana, trueLabel: 'Sesuai', falseLabel: 'Tidak Sesuai' }),
+            pgQuestion(2, 'Nana dan Nini dikenal oleh seluruh penduduk desa sebagai anak yang <b>berhati emas</b>. Makna ungkapan tersebut adalah ...', ['Sangat kaya dan bergelimang harta', 'Memiliki barang-barang berharga dari emas', 'Memiliki hati yang baik, suka menolong, dan peduli', 'Suka dipuji dan mencari perhatian orang lain'], 'C', { passage: s1Nana }),
+            bsQuestion(3, 'Tentukan apakah pernyataan-pernyataan berikut Sesuai atau Tidak Sesuai berdasarkan isi cerita.', [{ text: 'Yuyu mengharapkan pamrih dan imbalan setelah membantu Rafli.', correct: 'benar' }, { text: 'Nana dan Nini meminta imbalan setelah menolong burung Kekekow.', correct: 'salah' }, { text: 'Dina menemukan seekor kucing yang kelaparan lalu memberinya makan.', correct: 'benar' }], { passage: s1Nana, trueLabel: 'Sesuai', falseLabel: 'Tidak Sesuai' }),
             pgQuestion(4, 'Pasangan yang menunjukkan hubungan simbiosis mutualisme ditunjukkan oleh nomor ....<br><br>1. Burung jalak dengan kerbau<br>2. Tumbuhan benalu dengan pohon mangga<br>3. Ikan remora dengan ikan hiu<br>4. Lebah dengan bunga', ['1 dan 2', '1 dan 4', '2 dan 3', '3 dan 4'], 'B', { passage: s1Symbiosis }),
             pgQuestion(5, 'Bagan yang paling tepat untuk menggambarkan urutan pembahasan teks di atas adalah ...', ['Pengertian → Parasitisme → Mutualisme → Komensalisme', 'Mutualisme → Parasitisme → Komensalisme → Pengertian', 'Pengertian → Mutualisme → Parasitisme → Komensalisme', 'Komensalisme → Mutualisme → Parasitisme → Pengertian'], 'C', { passage: s1Symbiosis }),
             pgQuestion(6, 'Gagasan utama paragraf pertama pada teks di atas adalah ...', ['Contoh-contoh simbiosis di alam', 'Pengertian simbiosis', 'Dampak simbiosis parasitisme', 'Hubungan saling menguntungkan antarorganisme'], 'B', { passage: s1Symbiosis }),
-            pgQuestion(7, 'Bagaimana sikap tokoh Kura-Kura terhadap cangkangnya pada akhir cerita?', ['Membenci cangkangnya karena berat', 'Menyalahkan cangkangnya yang kaku', 'Menyadari kegunaannya dan merasa bangga', 'Membuang cangkangnya agar bergerak cepat'], 'C', { passage: s1Turtle }),
+            pgQuestion(7, 'Bagaimana sikap tokoh Kura-Kura terhadap cangkangnya pada akhir cerita?', ['Membenci cangkangnya karena berat', 'Menyalahkan cangkangnya yang kaku', 'Menyadari kegunaannya dan menerima dirinya', 'Membuang cangkangnya agar bergerak cepat'], 'C', { passage: s1Turtle }),
             pgQuestion(8, 'Perubahan pemahaman apa yang dialami Kura-Kura setelah peristiwa jatuh dari langit?', ['Menganggap cangkang sebagai beban hidup', 'Ingin meminjam sayap burung lain', 'Menyesal telah menolong teman-temannya', 'Belajar menghargai diri sendiri dan menerima keadaannya'], 'D', { passage: s1Turtle }),
             bsQuestion(9, 'Tentukan kesesuaian pernyataan mengenai karakter tokoh Kura-Kura.', [{ text: 'Kura-Kura merasa tidak puas dengan dirinya sendiri dan ingin bisa terbang.', correct: 'benar' }, { text: 'Kura-Kura rendah hati dan menerima keadaannya sejak awal cerita.', correct: 'salah' }, { text: 'Kura-Kura memaksa angsa membantunya terbang menggunakan sebatang kayu.', correct: 'benar' }, { text: 'Setelah jatuh, Kura-Kura menyadari bahwa cangkangnya sangat berguna.', correct: 'benar' }], { passage: s1Turtle, trueLabel: 'Sesuai', falseLabel: 'Tidak Sesuai' }),
             pgQuestion(10, 'Kata yang termasuk kategori kata umum (memiliki cakupan makna luas) ditunjukkan oleh nomor ....<br><br>1. Tokoh<br>2. Kura-kura<br>3. Pendidikan<br>4. SD Negeri 1', ['1 dan 2', '1 dan 3', '2 dan 4', '3 dan 4'], 'B', { passage: s1Kartini }),
@@ -1164,7 +1174,7 @@ Dokter kecil harus sigap dalam pelayanan kesehatan di sekolah. Untuk penanganan 
             bsQuestion(12, 'Tentukan kesesuaian informasi tersurat berdasarkan teks.', [{ text: 'Buku Habis Gelap Terbitlah Terang merupakan karya R.A. Kartini.', correct: 'benar' }, { text: 'Buku tersebut disunting oleh seorang tokoh pejuang asal Indonesia bernama J.H. Abendanon.', correct: 'salah' }, { text: 'Isi buku membahas pemikiran Kartini tentang perjuangan perempuan memperoleh pendidikan.', correct: 'benar' }, { text: 'Kartini memperjuangkan hak laki-laki agar bisa memperoleh pendidikan setinggi-tingginya.', correct: 'salah' }, { text: 'Buku tersebut terkenal karena memuat kritik Kartini terhadap tradisi yang membatasi perempuan.', correct: 'benar' }], { passage: s1Kartini, trueLabel: 'Sesuai', falseLabel: 'Tidak Sesuai' }),
             pgQuestion(13, 'Kalimat yang merupakan kalimat fakta ditunjukkan oleh nomor ....<br><br>1. Menurut saya, hewan besar selalu terlihat malas.<br>2. Mungkin kuda nil merasa lebih nyaman berendam daripada berjalan.<br>3. Kuda nil jarang terlihat berlari karena menghabiskan sebagian besar waktunya berendam di air.<br>4. Gajah Afrika berlari hingga 40 km/jam, sedangkan gajah Asia mencapai 24 km/jam.', ['1 dan 2', '1 dan 3', '2 dan 4', '3 dan 4'], 'D', { passage: s1LargeAnimals }),
             pgQuestion(14, 'Objek utama yang dibahas pada teks di atas adalah ...', ['Jenis-jenis air tempat berendam hewan', 'Hewan-hewan besar dan kemampuan mereka berlari', 'Perbedaan gajah Afrika dan gajah Asia', 'Cara mengukur kecepatan lari hewan mamalia'], 'B', { passage: s1LargeAnimals }),
-            pgQuestion(15, 'Ringkasan yang paling tepat untuk paragraf pertama teks di atas adalah ...', ['Kuda nil dan gajah adalah hewan yang sangat malas dan hanya ***** berendam sepanjang hari.', 'Kecepatan lari gajah Afrika jauh lebih cepat daripada gajah Asia sehingga gajah Afrika lebih unggul.', 'Banyak orang mengira gajah tidak bisa berlari sama sekali karena bentuk tubuhnya yang berat.', 'Banyak orang mengira hewan besar bergerak lambat, padahal gajah dan kuda nil juga mampu berlari.'], 'D', { passage: s1LargeAnimals }),
+            pgQuestion(15, 'Ringkasan yang paling tepat untuk paragraf pertama teks di atas adalah ...', ['Kuda nil dan gajah adalah hewan yang sangat malas dan hanya berendam sepanjang hari.', 'Kecepatan lari gajah Afrika jauh lebih cepat daripada gajah Asia sehingga gajah Afrika lebih unggul.', 'Banyak orang mengira gajah tidak bisa berlari sama sekali karena bentuk tubuhnya yang berat.', 'Banyak orang mengira hewan besar bergerak lambat, padahal gajah dan kuda nil juga mampu berlari.'], 'D', { passage: s1LargeAnimals }),
             pgQuestion(16, 'Amanat yang sesuai dengan isi bacaan paragraf kedua ditunjukkan oleh nomor ....<br><br>1. Jangan takut untuk mencoba hal-hal yang berbahaya.<br>2. Kita harus menerima keadaan dengan lapang dada.<br>3. Kita sebaiknya tidak mudah marah dan menyalahkan keadaan.<br>4. Jangan ragu menyalahkan orang lain atas kegagalan kita.', ['1 dan 2', '2 dan 3', '2 dan 4', '3 dan 4'], 'B', { passage: s1LargeAnimals }),
             pgQuestion(17, 'Nilai-nilai positif yang perlu diterapkan berdasarkan teks di atas ditunjukkan oleh nomor ....<br><br>1. Kesabaran<br>2. Sikap acuh tak acuh<br>3. Tidak mengeluh<br>4. Menerima keadaan', ['1, 2, dan 3', '1, 3, dan 4', '2, 3, dan 4', '1, 2, dan 4'], 'B', { passage: s1LargeAnimals }),
             bsQuestion(18, 'Tentukan kesesuaian pernyataan mengenai cerita Pippi (Teks 1).', [{ text: 'Pippi memasuki hutan diiringi tawa teman-temannya.', correct: 'benar' }, { text: 'Pippi mendapatkan banyak buah segar dan biji-bijian berkualitas baik dari hutan.', correct: 'salah' }, { text: 'Pippi menggerutu karena mendapatkan buah yang sudah busuk.', correct: 'benar' }, { text: 'Saat Pippi mencuci bajunya, matahari bersinar sangat terik sehingga bajunya cepat kering.', correct: 'salah' }, { text: 'Teman-teman Pippi sering bertanya ke mana ia hendak pergi.', correct: 'benar' }], { passage: s1Pippi, trueLabel: 'Sesuai', falseLabel: 'Tidak Sesuai' }),
@@ -1172,7 +1182,7 @@ Dokter kecil harus sigap dalam pelayanan kesehatan di sekolah. Untuk penanganan 
             pgQuestion(20, 'Amanat utama puisi pada Teks 2 di atas adalah ...', ['Kita harus merusak lingkungan demi membangun gedung-gedung tinggi', 'Kemajuan teknologi adalah satu-satunya hal yang paling penting di dunia', 'Manusia perlu menyadari pentingnya menjaga lingkungan di tengah kemajuan zaman', 'Lingkungan alam akan membaik dengan sendirinya tanpa perlu dijaga'], 'C', { passage: s1Pippi }),
             pgQuestion(21, 'Siapakah tokoh yang tidak menyukai Tiko dalam cerita di atas?', ['Kelinci', 'Kancil', 'Burung Gagak', 'Serigala'], 'C', { passage: s1Tiko }),
             pgQuestion(22, 'Makna ungkapan “Hati Hutan” yang disematkan kepada Tiko adalah ...', ['Tiko merupakan hewan yang paling kuat di hutan', 'Tiko memiliki hati mulia yang peduli terhadap sesama', 'Tiko tinggal di bagian paling tengah dari hutan', 'Tiko adalah pimpinan seluruh hewan liar'], 'B', { passage: s1Tiko }),
-            bsQuestion(23, 'Tentukan sikap Setuju atau Tidak Setuju terhadap tindakan tokoh berdasarkan nilai kedermawanan.', [{ text: 'Ibu Arista terkenal sebagai tetangga yang rajin dan ***** berbagi dengan sesama.', correct: 'benar' }, { text: 'Mariska memberikan makanan kepada tetangganya yang sedang sakit.', correct: 'benar' }, { text: 'Ures membantu temannya yang kesulitan agar memperoleh imbalan.', correct: 'salah' }], { passage: s1Tiko, trueLabel: 'Setuju', falseLabel: 'Tidak Setuju' }),
+            bsQuestion(23, 'Tentukan sikap Setuju atau Tidak Setuju terhadap tindakan tokoh berdasarkan nilai kedermawanan.', [{ text: 'Ibu Arista berbagi makanan dengan tetangganya.', correct: 'benar' }, { text: 'Mariska memberikan makanan kepada tetangganya yang sedang sakit.', correct: 'benar' }, { text: 'Ures membantu temannya yang kesulitan agar memperoleh imbalan.', correct: 'salah' }], { passage: s1Tiko, trueLabel: 'Setuju', falseLabel: 'Tidak Setuju' }),
             pgQuestion(24, 'Tanaman yang termasuk contoh tanaman apotek hidup berdasarkan teks ditunjukkan oleh nomor ....<br><br>1. Jahe dan kunyit<br>2. Bayam dan kangkung<br>3. Sawi dan kubis<br>4. Temulawak dan kumis kucing', ['1 dan 2', '1 dan 4', '2 dan 3', '3 dan 4'], 'B', { passage: s1Apotek }),
             pgQuestion(25, 'Bagan susunan teks Apotek Hidup yang paling tepat berdasarkan urutan paragrafnya adalah ...', ['Cara Menanam → Manfaat → Pengertian', 'Manfaat → Pengertian → Cara Menanam', 'Pengertian → Manfaat → Cara Menanam', 'Pengertian → Cara Menanam → Manfaat'], 'D', { passage: s1Apotek }),
             pgQuestion(26, 'Gagasan utama paragraf kedua teks di atas adalah ...', ['Jenis-jenis tanaman obat herbal', 'Manfaat lidah buaya untuk obat', 'Pengertian apotek hidup', 'Cara menanam tanaman apotek hidup'], 'D', { passage: s1Apotek }),
@@ -1188,11 +1198,37 @@ Dokter kecil harus sigap dalam pelayanan kesehatan di sekolah. Untuk penanganan 
             pgQuestion(36, 'Amanat yang sesuai dari cerita di atas ditunjukkan oleh nomor ....<br><br>1. Menyembunyikan kesalahan adalah tindakan yang wajar.<br>2. Berani mengakui kesalahan merupakan sikap terpuji.<br>3. Meminta maaf hanya perlu dilakukan jika ada yang melihat.<br>4. Berbohong dapat menimbulkan rasa bersalah di hati.', ['1 dan 2', '1 dan 3', '2 dan 4', '3 dan 4'], 'C', { passage: s1Lili }),
             pgQuestion(37, 'Nilai-nilai positif yang ditunjukkan oleh tokoh Lili saat mengakui kesalahannya adalah ....<br><br>1. Keras kepala<br>2. Kejujuran<br>3. Tanggung jawab<br>4. Rasa takut', ['1 dan 2', '2 dan 3', '2 dan 4', '3 dan 4'], 'B', { passage: s1Lili }),
             bsQuestion(38, 'Tentukan kesesuaian informasi berdasarkan cerita Kejujuran Lili.', [{ text: 'Lili mengakui perbuatannya kepada Pak Kucing pada keesokan harinya.', correct: 'benar' }, { text: 'Lili dengan sengaja menyembunyikan sampah agar tidak diketahui.', correct: 'salah' }, { text: 'Pak Kucing marah besar dan tidak mau memaafkan kesalahan Lili.', correct: 'salah' }], { passage: s1Lili, trueLabel: 'Sesuai', falseLabel: 'Tidak Sesuai' }),
-            bsQuestion(39, 'Berdasarkan Puisi Persahabatan, tentukan kesesuaian pernyataan berikut.', [{ text: 'Puisi menggambarkan hubungan sahabat yang saling memberi dan mendengarkan.', correct: 'benar' }, { text: 'Penulis bersyukur atas kehadiran sahabat yang selalu ada dalam setiap langkahnya.', correct: 'benar' }, { text: 'Sahabat selalu memberi tanpa pamrih dan tidak menghakimi.', correct: 'benar' }, { text: 'Sahabat hanya dianggap penting ketika seseorang menghadapi kesulitan saja.', correct: 'salah' }], { passage: s1FriendshipPoem, trueLabel: 'Sesuai', falseLabel: 'Tidak Sesuai' }),
+            bsQuestion(39, 'Berdasarkan Puisi Persahabatan, tentukan kesesuaian pernyataan berikut.', [{ text: 'Puisi menggambarkan hubungan sahabat yang saling memberi dan mendengarkan.', correct: 'benar' }, { text: 'Penulis bersyukur atas kehadiran sahabat yang selalu ada dalam setiap langkahnya.', correct: 'benar' }, { text: 'Sahabat selalu memberi tanpa pamrih dan tidak menghakimi.', correct: 'benar' }, { text: 'Sahabat hanya dianggap penting ketika seseorang menghadapi kesulitan saja.', correct: 'salah' }, { text: 'Sahabat dalam puisi pergi ke negeri seberang untuk menimba ilmu.', correct: 'benar' }], { passage: s1FriendshipPoem, trueLabel: 'Sesuai', falseLabel: 'Tidak Sesuai' }),
             pgQuestion(40, 'Amanat utama yang ingin disampaikan oleh penyair dalam puisi di atas adalah ...', ['Persahabatan hanya bernilai jika diukur dengan materi', 'Mencari sahabat baru lebih penting daripada mempertahankan sahabat lama', 'Kita hanya membutuhkan sahabat saat tertimpa musibah', 'Persahabatan merupakan hubungan yang perlu dijaga, dipelihara, dan diisi dengan kebersamaan serta berbagi kebahagiaan'], 'D', { passage: s1FriendshipPoem, passageClass: 'passage-box poem-box' })
         ];
 
-        const indoQuestions = soalSimulasi1;
+        const indoQuestions = [
+            ...soalSimulasi1.filter(question => question.type === 'pg').slice(0, 15),
+            ...soalSimulasi1.filter(question => question.type === 'benarSalah').slice(0, 10),
+            ...previousIndoQuestions.filter(question => question.type === 'benarSalah').slice(0, 5),
+            ...previousIndoQuestions.filter(question => question.multiSelect).slice(0, 10)
+        ];
+
+        // Tambahan 9 pernyataan benar/salah agar total nilai maksimal tepat 100 poin.
+        const bonusBsStatements = [
+            { text: 'Nana dan Nini melepaskan burung Kekekow kembali ke alam bebas setelah sembuh.', correct: 'benar' },
+            { text: 'Cangkang keras melindungi tubuh Kura-Kura saat ia terjatuh.', correct: 'benar' },
+            { text: 'Kumpulan surat R.A. Kartini disunting oleh J.H. Abendanon.', correct: 'benar' },
+            { text: 'Pippi hanya mendapatkan buah-buahan yang sudah busuk dari hutan.', correct: 'benar' },
+            { text: 'Penyair berjanji menanam kembali harapan dan menjaga bumi.', correct: 'benar' },
+            { text: 'Tiko tetap berbuat baik meskipun difitnah oleh Burung Gagak.', correct: 'benar' },
+            { text: 'Serigala berterima kasih dan memberikan imbalan kepada Bangau.', correct: 'salah' },
+            { text: 'B.J. Habibie wafat pada tanggal 11 September 2019.', correct: 'benar' },
+            { text: 'Pak Kucing memaafkan Lili dan mengajaknya membersihkan sampah bersama.', correct: 'benar' }
+        ];
+
+        indoQuestions
+            .filter(question => question.type === 'benarSalah')
+            .slice(0, bonusBsStatements.length)
+            .forEach((question, index) => {
+                question.statements.push(bonusBsStatements[index]);
+                question.correct.push(bonusBsStatements[index].correct);
+            });
 
         let examQuestions = [];
 
@@ -1405,6 +1441,11 @@ Dokter kecil harus sigap dalam pelayanan kesehatan di sekolah. Untuk penanganan 
             if (badgeEl) {
                 badgeEl.textContent = q.section || 'Soal';
             }
+            const pointsEl = document.getElementById('question-points');
+            if (pointsEl) {
+                const points = getQuestionMaxPoints(q);
+                pointsEl.textContent = `${points} poin maksimal`;
+            }
 
             const questionTextEl = document.getElementById('question-text');
             let questionHtml = '';
@@ -1539,6 +1580,33 @@ Dokter kecil harus sigap dalam pelayanan kesehatan di sekolah. Untuk penanganan 
                 delete userAnswers[currentQuestionIndex];
             }
             updateNavGridHighlight();
+        }
+
+        function getQuestionMaxPoints(q) {
+            if (q.type === 'benarSalah') return q.statements.length;
+            if (q.multiSelect) return q.correct.length;
+            return Number.isFinite(q.points) ? q.points : 1;
+        }
+
+        function getExamItemCounts() {
+            return examQuestions.reduce((counts, q) => {
+                if (q.type === 'benarSalah') {
+                    counts.bsQuestions++;
+                    counts.bsStatements += q.statements.length;
+                } else if (q.multiSelect) {
+                    counts.pgkQuestions++;
+                    counts.pgkCorrectOptions += q.correct.length;
+                } else {
+                    counts.pgQuestions++;
+                }
+                return counts;
+            }, {
+                pgQuestions: 0,
+                bsQuestions: 0,
+                bsStatements: 0,
+                pgkQuestions: 0,
+                pgkCorrectOptions: 0
+            });
         }
 
         function isQuestionAnswered(idx) {
@@ -1741,31 +1809,42 @@ Dokter kecil harus sigap dalam pelayanan kesehatan di sekolah. Untuk penanganan 
             examSubmitted = true;
             if (timerInterval) clearInterval(timerInterval);
 
-            // Calculate score
+            // PG mendapat poin per soal; BS dan PG Kompleks mendapat 1 poin per jawaban benar.
             let correctCount = 0;
+            let earnedPoints = 0;
+            const totalPoints = examQuestions.reduce((total, q) => total + getQuestionMaxPoints(q), 0);
             examQuestions.forEach((q, idx) => {
+                const points = getQuestionMaxPoints(q);
                 if (q.type === 'short') {
                     const userVal = (userAnswers[idx] || '').trim().toLowerCase();
                     if (userVal && q.acceptedAnswers.some(ans => ans.toLowerCase() === userVal)) {
                         correctCount++;
+                        earnedPoints += points;
                     }
                 } else if (q.type === 'benarSalah') {
                     const ans = userAnswers[idx] || {};
-                    const isCorrect = q.statements.every((statement, statementIndex) => ans[statementIndex] === statement.correct);
+                    const correctStatements = q.statements.filter((statement, statementIndex) => ans[statementIndex] === statement.correct).length;
+                    const isCorrect = correctStatements === q.statements.length;
                     if (isCorrect) correctCount++;
+                    earnedPoints += correctStatements;
+                } else if (q.multiSelect) {
+                    const selected = Array.isArray(userAnswers[idx]) ? userAnswers[idx] : [];
+                    const correctSelected = selected.filter(key => q.correct.includes(key)).length;
+                    const incorrectSelected = selected.filter(key => !q.correct.includes(key)).length;
+                    const isCorrect = q.correct.length === correctSelected && incorrectSelected === 0;
+                    if (isCorrect) correctCount++;
+                    earnedPoints += correctSelected;
                 } else {
-                    const isCorrect = q.multiSelect
-                        ? Array.isArray(userAnswers[idx])
-                            && q.correct.length === userAnswers[idx].length
-                            && q.correct.every(key => userAnswers[idx].includes(key))
-                        : userAnswers[idx] === q.correct;
+                    const isCorrect = userAnswers[idx] === q.correct;
                     if (isCorrect) {
                         correctCount++;
+                        earnedPoints += points;
                     }
                 }
             });
 
-            const score = Math.round((correctCount / examQuestions.length) * 100);
+            earnedPoints = Number(earnedPoints.toFixed(2));
+            const score = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
 
             // Format tanggal lahir untuk ringkasan hasil
             let formattedDate = studentData.tanggalLahir;
@@ -1786,12 +1865,31 @@ Dokter kecil harus sigap dalam pelayanan kesehatan di sekolah. Untuk penanganan 
             document.getElementById('res-ttl').textContent = formattedDate;
             document.getElementById('res-mapel').textContent = studentData.mapel;
             document.getElementById('res-score').textContent = score;
-            document.getElementById('res-summary').textContent = `Benar ${correctCount} dari ${examQuestions.length} Soal`;
+            document.getElementById('res-summary').textContent = `Benar ${correctCount} dari ${examQuestions.length} Soal · Poin ${earnedPoints} dari ${totalPoints}`;
+            const rubricCounts = getExamItemCounts();
+            const scoredItemCount = rubricCounts.pgQuestions + rubricCounts.bsStatements + rubricCounts.pgkCorrectOptions;
+            const rubricSummary = document.getElementById('score-rubric-summary');
+            if (rubricSummary) {
+                rubricSummary.textContent = `Jumlah ${examQuestions.length} soal: PG ${rubricCounts.pgQuestions} soal; BS ${rubricCounts.bsQuestions} soal berisi ${rubricCounts.bsStatements} pernyataan; PG Kompleks ${rubricCounts.pgkQuestions} soal dengan ${rubricCounts.pgkCorrectOptions} pilihan benar yang dinilai. Total ${scoredItemCount} butir penilaian, maksimal ${totalPoints} poin. Setiap jawaban/pernyataan benar bernilai 1 poin; pilihan keliru pada PG Kompleks tidak mengurangi poin. Nilai akhir = poin diperoleh ÷ poin maksimal × 100.`;
+            }
 
-            sendResultsToGoogleSheets(score, correctCount);
+            const rubricList = document.getElementById('score-rubric-list');
+            if (rubricList) {
+                rubricList.innerHTML = examQuestions.map((q, index) => {
+                    const points = getQuestionMaxPoints(q);
+                    const itemDetail = q.type === 'benarSalah'
+                        ? `BS · ${q.statements.length} pernyataan`
+                        : q.multiSelect
+                            ? `PG Kompleks · ${q.correct.length} pilihan benar`
+                            : 'PG';
+                    return `<li class="rounded-lg bg-white border border-slate-200 px-2 py-1.5 text-center">No. ${index + 1}<br><span class="font-bold text-blue-700">${itemDetail}</span><br>${points} poin maksimal</li>`;
+                }).join('');
+            }
+
+            sendResultsToGoogleSheets(score, correctCount, earnedPoints, totalPoints);
         }
 
-        function sendResultsToGoogleSheets(score, correctCount) {
+        function sendResultsToGoogleSheets(score, correctCount, earnedPoints, totalPoints) {
             const scriptUrl = getScriptUrl();
             const statusEl = document.getElementById('post-status-message');
 
@@ -1823,7 +1921,7 @@ Dokter kecil harus sigap dalam pelayanan kesehatan di sekolah. Untuk penanganan 
                 tanggalLahir: formattedDate,
                 mapel: studentData.mapel,
                 nilai: score,
-                ringkasan: `Benar ${correctCount} dari ${examQuestions.length} Soal`
+                ringkasan: `Benar ${correctCount} dari ${examQuestions.length} Soal; Poin ${earnedPoints} dari ${totalPoints}`
             };
 
             fetch(scriptUrl, {
